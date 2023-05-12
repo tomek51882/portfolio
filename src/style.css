@@ -1,0 +1,11 @@
+html,
+body,#app
+{
+    margin:0px;
+    height: 100%;
+    width: 100%;
+}
+
+#test123::-webkit-scrollbar{
+    display: none;
+  }
