@@ -1,4 +1,4 @@
-import { Color, Vector2 } from "three";
+import { Color, HSL, Vector2 } from "three";
 
 export class Ripple
 {
@@ -13,6 +13,7 @@ export class Ripple
     progress:number = 0;
     gridValues:(RippleCubeData|null)[][] ;
     color:Color;
+    hsl:HSL;
 
     static rows:number;
     static cols:number;
@@ -25,6 +26,9 @@ export class Ripple
         this.radius = radius;
         this.strength = strength;
         this.color = color;
+        this.hsl = {h:0,s:0,l:0};
+        
+        color.getHSL(this.hsl);
 
         this.gridValues = [];
         for(let y=0; y<Ripple.rows; y++)
@@ -57,11 +61,15 @@ export class Ripple
 export class RippleCubeData
 {
     heightValue:number;
-    colorValue:Color;
+    // colorValue:Color;
+    hue:number;
+    value:number;
 
-    constructor(color:Color)
+    constructor()
     {
-        this.colorValue = color;
+        // this.colorValue = color;
+        this.hue = 0;
+        this.value = 0 ;
         this.heightValue = 0;
     }
 }
