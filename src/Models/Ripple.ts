@@ -27,7 +27,7 @@ export class Ripple
         this.strength = strength;
         this.color = color;
         this.hsl = {h:0,s:0,l:0};
-        
+
         color.getHSL(this.hsl);
 
         this.gridValues = [];
@@ -61,15 +61,14 @@ export class Ripple
 export class RippleCubeData
 {
     heightValue:number;
+    color:Color;
     // colorValue:Color;
-    hue:number;
-    value:number;
+    // hue:number;
+    // value:number;
 
     constructor()
     {
-        // this.colorValue = color;
-        this.hue = 0;
-        this.value = 0 ;
         this.heightValue = 0;
+        this.color = new Color(0x000000);
     }
 }

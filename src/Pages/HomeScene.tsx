@@ -142,54 +142,19 @@ export function HomeScene(props:HomeSceneProps)
                         {
                             newY =  (Math.sin((tVal-dVal)*(1/(1-(dVal/Math.PI)))) * Math.cos(dVal/2));
                         }
-                        //@ts-ignore
-                        // groupRef.current.children[y*ROWS+x].material.color = new Color().setHSL(0,1,(0.5*distance/maxAllowedRadius)+0.5);
-                        // let newColor = new Color().lerpColors(ripple.color, grid[y][x].startColor, (distance/maxAllowedRadius) );
-                        // let newColor = new Color().lerpColors(ripple.color, grid[y][x].startColor, 1-newY );
-
-                        //let newColor = new Color().lerpColors(ripple.color, DEFAULT_COLOR, 1-newY );
-                        // let newColor = new Color().lerpColors(ripple.color, startColor, 1-newY );
-                        ripple.gridValues[y][x]!.heightValue = newY * ripple.strength;
-                        ripple.gridValues[y][x]!.hue = ripple.hsl.h;
-                        //1 = white, 0.5 = color, 0 = black
-                        ripple.gridValues[y][x]!.value = newY * 0.5;
-                        //ripple.gridValues[y][x]!.colorValue = newColor;
-                        //ripple.gridValues[y][x].colorValue = ripple.color;
+                        ripple.gridValues[y][x]!.heightValue = newY;
                     }
                 }
             });
             ripples = ripples.filter(ripp => {return ripp.shouldBeKilled !== true});
         }
 
-
-
         groupRef.current.children.forEach((child, idx)=>{
             // const childId = y*ROWS+x;
             const y = Math.floor(idx/ROWS);
             const x = idx%ROWS;
-            //#region blend v1
-            //@ts-ignorea
-            // child.material.color = ripples.reduce((result:null|Color, item, idx)=>{
-            //     let blended:HSL = {h:0,s:0,l:0};
-            //     let colorToBlend:HSL = {h:0,s:0,l:0};
-            //     if(item.gridValues[y][x]==null)
-            //     {
-            //         return null;
-            //     }
 
-            //     if(result==null)
-            //     {
-            //         result = item.gridValues[y][x]!.colorValue;
-            //     }
-
-
-            //     // result = new Color(0x000000);
-            //     //return new Color(0x000000).lerpColors(result, item.gridValues[y][x].colorValue, 0.5);
-            //     return result;
-            // },  null);
-            //#endregion
-
-            // let finalColor = null;
+            let finalColor = null;
             let finalHue = null;
             let finalValue = 0;
 
@@ -198,48 +163,30 @@ export function HomeScene(props:HomeSceneProps)
                 //Blend when there is only one ripple
                 if(ripple.gridValues[y][x]==null)
                 {
+                    //finalColor = new Color(0x000000);
                     continue;
                 }
-                if(finalHue==null)
+                if(finalColor==null)
                 {
-                    finalHue = ripple.gridValues[y][x]!.hue;
+                    finalColor = ripple.color;
                     continue;
                 }
+                // if(finalHue==null)
+                // {
+                //     finalHue = ripple.gridValues[y][x]!.hue;
+                //     continue;
+                // }
                 //blend multiple ripples
-                // let blendedSoFar:HSL = {h:finalHue,s:1,l:finalValue};
-                let blendedSoFar:HSL = {h:finalHue,s:1,l:0.5};
-                let colorToBlend:HSL = {h:ripple.gridValues[y][x]!.hue,s:0,l:ripple.gridValues[y][x]!.value};
-                // let hueDiff = blendedSoFar.h-colorToBlend.h; 
-                // let altMode = Math.abs(hueDiff)>0.5 ? true : false;
-
-                // if(altMode)
-                // {
-                //     finalHue = 0;
-                //     finalValue = 0;
-                // }
-                // else
-                // {
-                    let tempColor1 = new Color().setHSL(blendedSoFar.h,1,0.5);
-                    let tempColor2 = new Color().setHSL(colorToBlend.h,1,0.5);
-                    let tempResultColor = new Color(MathUtils.clamp(tempColor1.r+tempColor2.r,0,1),MathUtils.clamp(tempColor1.g+tempColor2.g,0,1),MathUtils.clamp(tempColor1.b+tempColor2.b,0,1))
-                    // finalColor = tempResultColor;
-                //     // finalHue = (blendedSoFar.h+colorToBlend.h)/2 ;
-                    finalHue = tempResultColor.getHSL({h:0,s:0,l:0}).h;
-                // }
+                let tempColor1:Color = finalColor;
+                let tempColor2:Color = ripple.color;
+                let tempResultColor:Color = new Color(MathUtils.clamp(tempColor1.r+tempColor2.r,0,1),MathUtils.clamp(tempColor1.g+tempColor2.g,0,1),MathUtils.clamp(tempColor1.b+tempColor2.b,0,1)) 
+                finalColor =  tempResultColor;
             }
-            // for(const ripple of ripples)
-            // {
-            //     if(ripple.gridValues[y][x]==null)
-            //     {
-            //         continue;
-            //     }
-            //     finalValue = MathUtils.clamp(finalValue+ripple.gridValues[y][x]!.value,0,1) ;
-            // }
-            
-            //@ts-ignorea
-            child.material.color = new Color().setHSL(finalHue,1,finalValue);
-            // child.material.color = finalColor;
-            child.position.z = ripples.reduce((partialSum, item)=> partialSum+(item.gridValues[y][x]?.heightValue||0), 0) + Math.sin((state.clock.elapsedTime + idx ) / 0.5) / 10;
+            // child.material.color = new Color().setHSL(finalHue,1,finalValue);
+            const heightValue = ripples.reduce((partialSum, item)=> partialSum+(item.gridValues[y][x]?.heightValue||0), 0);
+            //@ts-ignore
+            child.material.color = new Color().lerpColors(DEFAULT_COLOR, finalColor||DEFAULT_COLOR, heightValue);
+            child.position.z =  heightValue + Math.sin((state.clock.elapsedTime + idx ) / 0.5) / 10;
         })
     })
 
