@@ -11,7 +11,7 @@ export class Ripple
     radius:number;
     strength:number;
     progress:number = 0;
-    gridValues:(RippleCubeData)[][] ;
+    gridValues:(RippleCubeData|null)[][] ;
     color:Color;
 
     static rows:number;
@@ -32,7 +32,7 @@ export class Ripple
             this.gridValues[y] = [];
             for(let x=0; x<Ripple.cols; x++)
             {
-                this.gridValues[y][x] = new RippleCubeData();
+                this.gridValues[y][x] = null;//new RippleCubeData();
             }
         }
     }
@@ -59,9 +59,9 @@ export class RippleCubeData
     heightValue:number;
     colorValue:Color;
 
-    constructor()
+    constructor(color:Color)
     {
-        this.colorValue = new Color(0x000000);
+        this.colorValue = color;
         this.heightValue = 0;
     }
 }
