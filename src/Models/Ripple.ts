@@ -13,7 +13,6 @@ export class Ripple
     progress:number = 0;
     gridValues:(RippleCubeData|null)[][] ;
     color:Color;
-    hsl:HSL;
 
     static rows:number;
     static cols:number;
@@ -26,9 +25,9 @@ export class Ripple
         this.radius = radius;
         this.strength = strength;
         this.color = color;
-        this.hsl = {h:0,s:0,l:0};
+        // this.hsl = {h:0,s:0,l:0};
 
-        color.getHSL(this.hsl);
+        // color.getHSL(this.hsl);
 
         this.gridValues = [];
         for(let y=0; y<Ripple.rows; y++)
@@ -61,14 +60,16 @@ export class Ripple
 export class RippleCubeData
 {
     heightValue:number;
-    color:Color;
-    // colorValue:Color;
-    // hue:number;
-    // value:number;
+    //sourceColor:Color - not needed
+
 
     constructor()
     {
         this.heightValue = 0;
-        this.color = new Color(0x000000);
+        
     }
+}
+export class RippleBlendRatio
+{
+    
 }

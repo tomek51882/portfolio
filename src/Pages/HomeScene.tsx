@@ -5,6 +5,7 @@ import { Vector3, Color, Group, Vector2, MathUtils, HSL } from "three";
 import { Cube } from "../Models/Cube";
 import { CubeMesh } from "../Components/3D/CubeMesh";
 import { Ripple, RippleCubeData } from "../Models/Ripple";
+import {  Bloom, EffectComposer } from "@react-three/postprocessing";
 
 //https://stackoverflow.com/questions/31121628/finding-all-points-in-certain-radius-of-another-point
 //https://stackoverflow.com/questions/74417694/find-all-points-in-a-radius-of-one-point-python
@@ -21,7 +22,8 @@ const ROWS = 20;
 const COLS = 20;
 let ripples:Ripple[] = [];
 let c:number = 0;
-const DEFAULT_COLOR = new Color(0xffffff);
+const DEFAULT_COLOR = new Color(0x050505);
+// const DEFAULT_COLOR = new Color(0xffffff);
 
 export function HomeScene(props:HomeSceneProps)
 {
@@ -83,7 +85,7 @@ export function HomeScene(props:HomeSceneProps)
         c++;
         if(c>2) c=0;
 
-        const ripple = new Ripple(position,20, 1, color);
+        const ripple = new Ripple(position,30, 2, color);
 
         for(let x=Math.floor(ripple.position.x - ripple.radius/2); x<=ripple.position.x+ ripple.radius/2 ; x++)
         {
@@ -108,6 +110,8 @@ export function HomeScene(props:HomeSceneProps)
         // console.log(ripples[0].color.getHSL({h:0, s:0, l:0}));
     }
     useFrame((state)=>{
+
+        //tworzenie mapy fali
         if(ripples.length!==0)
         {
             ripples.forEach((ripple,idx) => {
@@ -142,13 +146,17 @@ export function HomeScene(props:HomeSceneProps)
                         {
                             newY =  (Math.sin((tVal-dVal)*(1/(1-(dVal/Math.PI)))) * Math.cos(dVal/2));
                         }
-                        ripple.gridValues[y][x]!.heightValue = newY;
+                        //let newColor = new Color().lerpColors(ripple.color, DEFAULT_COLOR, 1-newY ); 
+
+                        ripple.gridValues[y][x]!.heightValue = newY * ripple.strength;
+                        ripple.gridValues[y][x]!.rawHeight = newY;
                     }
                 }
             });
             ripples = ripples.filter(ripp => {return ripp.shouldBeKilled !== true});
         }
 
+        //blendowanie fal
         groupRef.current.children.forEach((child, idx)=>{
             // const childId = y*ROWS+x;
             const y = Math.floor(idx/ROWS);
@@ -163,29 +171,41 @@ export function HomeScene(props:HomeSceneProps)
                 //Blend when there is only one ripple
                 if(ripple.gridValues[y][x]==null)
                 {
-                    //finalColor = new Color(0x000000);
                     continue;
                 }
                 if(finalColor==null)
                 {
-                    finalColor = ripple.color;
+                    finalColor = new Color().lerpColors(DEFAULT_COLOR, ripple.color, ripple.gridValues[y][x]!.rawHeight);
                     continue;
                 }
-                // if(finalHue==null)
-                // {
-                //     finalHue = ripple.gridValues[y][x]!.hue;
-                //     continue;
-                // }
-                //blend multiple ripples
-                let tempColor1:Color = finalColor;
-                let tempColor2:Color = ripple.color;
-                let tempResultColor:Color = new Color(MathUtils.clamp(tempColor1.r+tempColor2.r,0,1),MathUtils.clamp(tempColor1.g+tempColor2.g,0,1),MathUtils.clamp(tempColor1.b+tempColor2.b,0,1)) 
-                finalColor =  tempResultColor;
+                // let blendedSoFar:HSL = {h:0,s:0,l:0}; 
+                // let colorToBlend:HSL = {h:0,s:0,l:0}; 
+                // finalColor.getHSL(blendedSoFar); 
+                // ripple.color.getHSL(colorToBlend);
+                let r:number = finalColor.r + ripple.color.r*ripple.gridValues[y][x]!.heightValue;
+                let g:number = finalColor.g + ripple.color.g*ripple.gridValues[y][x]!.heightValue;
+                let b:number = finalColor.b + ripple.color.b*ripple.gridValues[y][x]!.heightValue;
+
+                finalColor = new Color(MathUtils.clamp(r,0,1),MathUtils.clamp(g,0,1),MathUtils.clamp(b,0,1));
+                // let col1 = (1-Math.abs(0.5-blendedSoFar.l)/0.5); //How far the color is from HUE V=100%
+                // console.log(blendedSoFar.h, col1);
+
+                //finalColor.lerpColors(DEFAULT_COLOR, finalColor,col1);
             }
-            // child.material.color = new Color().setHSL(finalHue,1,finalValue);
+
+            //final blend
+
+            //final lerp
+
             const heightValue = ripples.reduce((partialSum, item)=> partialSum+(item.gridValues[y][x]?.heightValue||0), 0);
+
+
             //@ts-ignore
-            child.material.color = new Color().lerpColors(DEFAULT_COLOR, finalColor||DEFAULT_COLOR, heightValue);
+            // child.material.color = finalColor;
+            child.material.color = finalColor === null ? DEFAULT_COLOR : finalColor;
+            // child.material.emissive= new Color(0xffffff)
+            // console.log(child.material );
+
             child.position.z =  heightValue + Math.sin((state.clock.elapsedTime + idx ) / 0.5) / 10;
         })
     })
@@ -237,9 +257,9 @@ export function HomeScene(props:HomeSceneProps)
 
         {/* <Stats/> */}
 
-        {/* <EffectComposer multisampling={0}>
-        <DepthOfField target={new Vector3(target.x, target.y, target.z)} focalLength={focalLength} bokehScale={bokehScale} focusDistance={focusDistance} focusRange={focusRange}/>
-        </EffectComposer> */}
+        {/* <EffectComposer multisampling={0}> */}
+        {/* <DepthOfField target={new Vector3(target.x, target.y, target.z)} focalLength={focalLength} bokehScale={bokehScale} focusDistance={focusDistance} focusRange={focusRange}/> */}
+        {/* </EffectComposer> */}
     </>
     )
 }
