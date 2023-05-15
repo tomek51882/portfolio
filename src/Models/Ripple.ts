@@ -60,16 +60,14 @@ export class Ripple
 export class RippleCubeData
 {
     heightValue:number;
+    rawHeight:number;
     //sourceColor:Color - not needed
 
 
     constructor()
     {
         this.heightValue = 0;
+        this.rawHeight=0;
         
     }
-}
-export class RippleBlendRatio
-{
-    
 }

@@ -22,8 +22,8 @@ const ROWS = 20;
 const COLS = 20;
 let ripples:Ripple[] = [];
 let c:number = 0;
-const DEFAULT_COLOR = new Color(0x050505);
-// const DEFAULT_COLOR = new Color(0xffffff);
+// const DEFAULT_COLOR = new Color(0x0000001
+const DEFAULT_COLOR = new Color(0xffffff);
 
 export function HomeScene(props:HomeSceneProps)
 {
@@ -85,7 +85,7 @@ export function HomeScene(props:HomeSceneProps)
         c++;
         if(c>2) c=0;
 
-        const ripple = new Ripple(position,30, 2, color);
+        const ripple = new Ripple(position,25, 2, color);
 
         for(let x=Math.floor(ripple.position.x - ripple.radius/2); x<=ripple.position.x+ ripple.radius/2 ; x++)
         {
@@ -156,55 +156,59 @@ export function HomeScene(props:HomeSceneProps)
             ripples = ripples.filter(ripp => {return ripp.shouldBeKilled !== true});
         }
 
-        //blendowanie fal
         groupRef.current.children.forEach((child, idx)=>{
+            
             // const childId = y*ROWS+x;
             const y = Math.floor(idx/ROWS);
             const x = idx%ROWS;
-
-            let finalColor = null;
-            let finalHue = null;
-            let finalValue = 0;
-
+            
+            let finalColor = null//new Color(0x000000);
+            let finalHSL:HSL = {h:0,s:0,l:0};
+            let combinedHeight = 0;
+            let amountOfRipplesInCell = 0;
+            
+            //nakładanie się kolorów fal
             for(const ripple of ripples)
             {
-                //Blend when there is only one ripple
                 if(ripple.gridValues[y][x]==null)
                 {
                     continue;
                 }
                 if(finalColor==null)
                 {
-                    finalColor = new Color().lerpColors(DEFAULT_COLOR, ripple.color, ripple.gridValues[y][x]!.rawHeight);
-                    continue;
+                    finalColor = new Color(0x000000);
                 }
-                // let blendedSoFar:HSL = {h:0,s:0,l:0}; 
-                // let colorToBlend:HSL = {h:0,s:0,l:0}; 
-                // finalColor.getHSL(blendedSoFar); 
-                // ripple.color.getHSL(colorToBlend);
-                let r:number = finalColor.r + ripple.color.r*ripple.gridValues[y][x]!.heightValue;
-                let g:number = finalColor.g + ripple.color.g*ripple.gridValues[y][x]!.heightValue;
-                let b:number = finalColor.b + ripple.color.b*ripple.gridValues[y][x]!.heightValue;
+                amountOfRipplesInCell++;
+
+                const rawHeightValue = ripple.gridValues[y][x]!.rawHeight;
+                let r:number = finalColor.r + ripple.color.r*rawHeightValue;
+                let g:number = finalColor.g + ripple.color.g*rawHeightValue;
+                let b:number = finalColor.b + ripple.color.b*rawHeightValue;
 
                 finalColor = new Color(MathUtils.clamp(r,0,1),MathUtils.clamp(g,0,1),MathUtils.clamp(b,0,1));
-                // let col1 = (1-Math.abs(0.5-blendedSoFar.l)/0.5); //How far the color is from HUE V=100%
-                // console.log(blendedSoFar.h, col1);
-
-                //finalColor.lerpColors(DEFAULT_COLOR, finalColor,col1);
+                finalHSL = finalColor.getHSL(finalHSL);
+                combinedHeight += rawHeightValue;
             }
 
-            //final blend
-
             //final lerp
+            if(finalColor==null)
+            {
+                //@ts-ignore
+                child.material.color = DEFAULT_COLOR;
+            }
+            else if((new Set([finalColor.r,finalColor.g,finalColor.b])).size !== 1)
+            {
+                // console.log(1-Math.abs(0.5-finalHSL.l)/0.5)
+                //@ts-ignore
+                child.material.color = new Color().lerpColors(DEFAULT_COLOR, new Color().setHSL(finalHSL.h,1,finalHSL.l), 1-Math.abs(0.5-finalHSL.l)/0.5 );
+            }
+            
+            // else
+            // {
+            // }
 
+            //nakładanie się wysokości fal
             const heightValue = ripples.reduce((partialSum, item)=> partialSum+(item.gridValues[y][x]?.heightValue||0), 0);
-
-
-            //@ts-ignore
-            // child.material.color = finalColor;
-            child.material.color = finalColor === null ? DEFAULT_COLOR : finalColor;
-            // child.material.emissive= new Color(0xffffff)
-            // console.log(child.material );
 
             child.position.z =  heightValue + Math.sin((state.clock.elapsedTime + idx ) / 0.5) / 10;
         })
