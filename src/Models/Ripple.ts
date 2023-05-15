@@ -6,7 +6,7 @@ export class Ripple
     private created:number;
 
     position: Vector2;
-    lifetime:number = 4;
+    lifetime:number = 20;
     shouldBeKilled:boolean = false;
     radius:number;
     strength:number;

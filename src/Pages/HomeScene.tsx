@@ -1,11 +1,11 @@
-import { OrbitControls, PerspectiveCamera, useScroll } from "@react-three/drei";
+import { OrbitControls, PerspectiveCamera, useScroll, Stats, OrthographicCamera } from "@react-three/drei";
 import { CameraProps, useFrame } from "@react-three/fiber";
 import React, { useEffect, useRef, useState } from "react";
 import { Vector3, Color, Group, Vector2, MathUtils, HSL } from "three";
 import { Cube } from "../Models/Cube";
 import { CubeMesh } from "../Components/3D/CubeMesh";
 import { Ripple, RippleCubeData } from "../Models/Ripple";
-import {  Bloom, EffectComposer } from "@react-three/postprocessing";
+import {  Bloom, DepthOfField, EffectComposer } from "@react-three/postprocessing";
 
 //https://stackoverflow.com/questions/31121628/finding-all-points-in-certain-radius-of-another-point
 //https://stackoverflow.com/questions/74417694/find-all-points-in-a-radius-of-one-point-python
@@ -22,7 +22,7 @@ const ROWS = 20;
 const COLS = 20;
 let ripples:Ripple[] = [];
 let c:number = 0;
-// const DEFAULT_COLOR = new Color(0x0000001
+// const DEFAULT_COLOR = new Color(0x101010)
 const DEFAULT_COLOR = new Color(0xffffff);
 
 export function HomeScene(props:HomeSceneProps)
@@ -44,9 +44,14 @@ export function HomeScene(props:HomeSceneProps)
             grid[y][x] = new Cube(new Vector2(x,y), new Vector3(x-((COLS-1)/2),y-((ROWS-1)/2),0));
         }
     }
-    console.log(grid);
+    console.log(cameraRef);
     Ripple.setMapDimentions(ROWS, COLS);
     setGrid(grid);
+    createRipple(new Vector2(ROWS/2, COLS/2), Math.floor(Math.random()*(30-20))+20, Math.random()*1 );
+    setInterval(()=>{
+        createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(30-20))+20, Math.random()*1 );
+        createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(30-20))+20, Math.random()*1 );
+    }, 8000);
   },[])
   
 //   useFrame((state)=>{
@@ -65,27 +70,11 @@ export function HomeScene(props:HomeSceneProps)
 //   })
 
 
-    function createRipple(position:Vector2)
+    function createRipple(position:Vector2, range:number, strength:number)
     {
-        //const childId = position.y*ROWS+position.x;
-        // const color = new Color().setHSL(Math.random()*1,1,0.5);
-        let color;
-        if(c===0)
-        {
-            color = new Color(0xff0000);
-        }
-        else if(c===1)
-        {
-            color = new Color(0x00ff00);
-        } 
-        else
-        {
-            color = new Color(0x0000ff);
-        }
-        c++;
-        if(c>2) c=0;
+        const color = new Color().setHSL(Math.random()*1,1,0.5);
 
-        const ripple = new Ripple(position,25, 2, color);
+        const ripple = new Ripple(position,range, strength, color);
 
         for(let x=Math.floor(ripple.position.x - ripple.radius/2); x<=ripple.position.x+ ripple.radius/2 ; x++)
         {
@@ -106,8 +95,6 @@ export function HomeScene(props:HomeSceneProps)
 
         ripples.push(ripple);
         console.log(`new Ripple at ${position.x},${position.y}`);
-        // console.log(grid[0][0].worldPosition.z);
-        // console.log(ripples[0].color.getHSL({h:0, s:0, l:0}));
     }
     useFrame((state)=>{
 
@@ -139,12 +126,24 @@ export function HomeScene(props:HomeSceneProps)
                         }
                         const normalizedDistance = distance/maxAllowedRadius
                         
-                        const tVal = Math.PI*ripple.progress;
+                        const tVal = 2*Math.PI*ripple.progress;
                         const dVal = Math.PI*normalizedDistance;
                         let newY = 0;
                         if(tVal > dVal)
                         {
-                            newY =  (Math.sin((tVal-dVal)*(1/(1-(dVal/Math.PI)))) * Math.cos(dVal/2));
+                            // newY =  (Math.sin((tVal-dVal)*(1/(1-(dVal/Math.PI)))) * Math.cos(dVal/2));
+
+                            // newY =  Math.sin((tVal-dVal)*(1/(1-(dVal/Math.PI)))) * (1-normalizedDistance);
+                            newY =  Math.sin(3*(tVal-dVal)) * (1-ripple.progress) * (1-normalizedDistance);
+                            // if((tVal-dVal)>(Math.PI/2))
+                            // {
+                            //     newY = 100
+                            // }
+                            // else
+                            // {
+                            //     newY =  Math.tan((tVal-dVal)) * (1-ripple.progress) * (1-normalizedDistance);
+                                
+                            // }
                         }
                         //let newColor = new Color().lerpColors(ripple.color, DEFAULT_COLOR, 1-newY ); 
 
@@ -158,6 +157,10 @@ export function HomeScene(props:HomeSceneProps)
 
         groupRef.current.children.forEach((child, idx)=>{
             
+            // if(child.visible===false)
+            // {
+            //     return;
+            // }
             // const childId = y*ROWS+x;
             const y = Math.floor(idx/ROWS);
             const x = idx%ROWS;
@@ -181,9 +184,9 @@ export function HomeScene(props:HomeSceneProps)
                 amountOfRipplesInCell++;
 
                 const rawHeightValue = ripple.gridValues[y][x]!.rawHeight;
-                let r:number = finalColor.r + ripple.color.r*rawHeightValue;
-                let g:number = finalColor.g + ripple.color.g*rawHeightValue;
-                let b:number = finalColor.b + ripple.color.b*rawHeightValue;
+                let r:number = finalColor.r + ripple.color.r*(rawHeightValue*1.2);
+                let g:number = finalColor.g + ripple.color.g*(rawHeightValue*1.2);
+                let b:number = finalColor.b + ripple.color.b*(rawHeightValue*1.2);
 
                 finalColor = new Color(MathUtils.clamp(r,0,1),MathUtils.clamp(g,0,1),MathUtils.clamp(b,0,1));
                 finalHSL = finalColor.getHSL(finalHSL);
@@ -202,41 +205,51 @@ export function HomeScene(props:HomeSceneProps)
                 //@ts-ignore
                 child.material.color = new Color().lerpColors(DEFAULT_COLOR, new Color().setHSL(finalHSL.h,1,finalHSL.l), 1-Math.abs(0.5-finalHSL.l)/0.5 );
             }
-            
-            // else
-            // {
-            // }
+            else if (combinedHeight>0)
+            {
+                //child.material.color = new Color().lerpColors(DEFAULT_COLOR, new Color(0xffffff),finalHSL.l);
+            }
 
             //nakładanie się wysokości fal
             const heightValue = ripples.reduce((partialSum, item)=> partialSum+(item.gridValues[y][x]?.heightValue||0), 0);
 
-            child.position.z =  heightValue + Math.sin((state.clock.elapsedTime + idx ) / 0.5) / 10;
+            child.position.z =  heightValue //;+ Math.sin((state.clock.elapsedTime + x%2*Math.PI + y%2*Math.PI + idx ) / 2) / 40;
+            // child.position.z =  heightValue + Math.sin((state.clock.elapsedTime + idx ) / 0.5) / 10; 
+
         })
     })
 
     return (
     <>
-        <color attach="background" args={["#211f28"]} />
+        {/* <color attach="background" args={["#211f28"]} /> */}
+        {/* <color attach="background" args={["#e2e2e2"]} /> */}
+        <color attach="background" args={["#e7e7e7"]} />
 
         <OrbitControls 
         enablePan={false} 
         enableDamping={false} 
-        enableZoom={true} 
-        enableRotate={true}
+        enableZoom={false} 
+        enableRotate={false}
         target={new Vector3(0,0,0)} 
-        autoRotate={false}
+        autoRotate={true}
         autoRotateSpeed={0.2}
         />
-        <PerspectiveCamera 
+        {/* <PerspectiveCamera 
             makeDefault 
             ref={cameraRef}
             position={[4.98, 4.11, 6.42]}
+        />   */}
+        <PerspectiveCamera 
+            makeDefault 
+            ref={cameraRef}
+            position={[9,3.5,9]}
+            fov={50}
         />    
-        <gridHelper/>
-        <axesHelper/>
+        {/* <gridHelper/>
+        <axesHelper/> */}
 
 
-        <ambientLight color={new Color(0x666666)}/>
+        <ambientLight color={new Color(0xb0b0b0)}/>
         {/* <SpotLight angle={0.34} intensity={14} attenuation={8} distance={8} color={"#4040dd"} position={[-1,4,2]} penumbra={0} />
         <SpotLight angle={0.25} intensity={8} attenuation={8} distance={8} color={"#bb3333"} position={[2,4,-2]} penumbra={1} /> */}
 
@@ -249,7 +262,8 @@ export function HomeScene(props:HomeSceneProps)
                     return (
                         rowItem.map((colItem, x)=>{
                             const cubeData = grid[y][x];
-                            return( <CubeMesh key={y*10+x} position={cubeData.worldPosition} onClick={()=>{createRipple(cubeData.arrayPosition)}}/>)
+                            // return( <CubeMesh key={y*10+x} position={cubeData.worldPosition} onClick={()=>{createRipple(cubeData.arrayPosition)}}/>)
+                            return( <CubeMesh key={y*10+x} position={cubeData.worldPosition}/>)
                         })
                         
                         )
@@ -261,9 +275,9 @@ export function HomeScene(props:HomeSceneProps)
 
         {/* <Stats/> */}
 
-        {/* <EffectComposer multisampling={0}> */}
-        {/* <DepthOfField target={new Vector3(target.x, target.y, target.z)} focalLength={focalLength} bokehScale={bokehScale} focusDistance={focusDistance} focusRange={focusRange}/> */}
-        {/* </EffectComposer> */}
+        {/* <EffectComposer resolutionScale={0}>
+            <DepthOfField blendFunction={4}/>
+        </EffectComposer> */}
     </>
     )
 }
