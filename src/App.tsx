@@ -3,34 +3,49 @@ import { ComponentA } from './ComponentA'
 import styled from '@emotion/styled'
 import {OrbitControls, PerspectiveCamera, Scroll, ScrollControls, SpotLight, Stats} from "@react-three/drei";
 import { CameraProps, Canvas } from '@react-three/fiber';
-import { AppBar, Box, Button, Container, Divider, IconButton, Stack, Theme, Toolbar, Typography, useTheme } from '@mui/material';
+import { AppBar, Box, Button, Container, Divider, Grid, IconButton, MenuItem, Stack, Theme, Toolbar, Typography, useTheme } from '@mui/material';
 import { ThemeProvider } from '@emotion/react';
-import { Menu } from '@mui/icons-material';
+import { LightMode, Menu } from '@mui/icons-material';
 import { HomeScene } from './Pages/HomeScene';
 
 function App() 
 {
   const theme = useTheme();
+  const test = useRef();
+
+  // useEffect(()=>{
+  // },[])
 
   return (
     <>
-      {/* <div style={{position:"absolute", zIndex:100, width:"100%", backdropFilter:"blur(4px)"}}>
-        <Box component="div" sx={{p:1}}>
-          <Stack spacing={1} direction="row">
+      <Box component="div" style={{position:"absolute", zIndex:100, width:"100%", backdropFilter:"blur(4px)"}}>
+        <Stack spacing={1} direction="row" sx={{m:1}} justifyContent={"space-between"}>
+          <Box component="div">
             <Button>Career</Button>
             <Button>My Projects</Button>
-          </Stack>
-        </Box>
+
+          </Box>
+          <Box component="div">
+            <Button>EN</Button>
+            <IconButton color='primary'>
+              <LightMode/>
+            </IconButton>
+
+          </Box>
+        </Stack>
         <Divider color='primary'/>
-      </div> */}
+      </Box>
       <Canvas id='test123'>
         <ScrollControls pages={3} damping={0.2} style={{right:"-18px", width:"unset"}}> 
           <HomeScene/>
-          {/* <Test html>
+          <Test html>
             <ThemeProvider theme={theme}>
-              <Box component="div" style={{padding: "1rem", position: "absolute", top:"50vh", transform: "translate(0%, -50%)"}} >
-                <Typography variant='h2' color={"primary"} >Tomasz Jędrzejczak</Typography>
-                <Typography variant='h4' color={"primary"} >Software Developer</Typography>
+              <Box component="div" style={{ padding: "1rem", position: "absolute", top:"50vh", transform: "translate(0%, -50%)", maxWidth:"min-content"}} >
+                <Typography variant='h2' color={"primary"} >Tomasz&nbsp;Jędrzejczak</Typography>
+                <Typography variant='h4' color={"primary"} >Software&nbsp;Developer</Typography>
+                <Divider sx={{m:1}}/>
+                {/* <Typography variant='body1' color={"primary"} sx={{fontStyle:"italic"}}>Hi! Nice to see you, hope you will have a great time!</Typography> */}
+                <Typography variant='body1' color={"primary"} sx={{fontStyle:"italic"}}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus ut diam vel sapien feugiat vehicula. Ut id ante at mi ultricies fermentum at sed risus. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Fusce lacinia volutpat massa.</Typography>
               </Box>
 
               <Box component="div" style={{padding: "1rem", position: "absolute", top:"100vh"}} >
@@ -59,7 +74,7 @@ function App()
                 <Typography variant='body1' color={"primary"} >Page 3</Typography>
               </Box>
             </ThemeProvider>
-          </Test> */}
+          </Test>
         </ScrollControls>
       </Canvas>
     </>

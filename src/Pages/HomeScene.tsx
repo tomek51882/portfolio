@@ -21,9 +21,17 @@ interface HomeSceneProps
 const ROWS = 20;
 const COLS = 20;
 let ripples:Ripple[] = [];
+let transitionWave:Ripple|null = null;
+let themeChanged = false;
 let c:number = 0;
-// const DEFAULT_COLOR = new Color(0x101010)
-const DEFAULT_COLOR = new Color(0xffffff);
+const LIGHT_COLOR = new Color(0xffffff);
+const DARK_COLOR = new Color(0x000000);
+let DEFAULT_COLOR = DARK_COLOR;
+
+const DARK_BACKGROUND_COLOR = new Color(0x010101);
+const LIGHT_BACKGROUND_COLOR = new Color(0xcccccc);
+// const DEFAULT_COLOR = new Color(0xffffff);
+let darkTheme = true;
 
 export function HomeScene(props:HomeSceneProps)
 {
@@ -31,6 +39,7 @@ export function HomeScene(props:HomeSceneProps)
   const cameraRef = useRef<CameraProps>();
   const scroll = useScroll();
   const groupRef = useRef<Group>(null!);
+  const bgRef = useRef<Color>(null!);
 
   const [grid, setGrid] = useState<Cube[][]>([]);
 
@@ -47,11 +56,14 @@ export function HomeScene(props:HomeSceneProps)
     console.log(cameraRef);
     Ripple.setMapDimentions(ROWS, COLS);
     setGrid(grid);
-    createRipple(new Vector2(ROWS/2, COLS/2), Math.floor(Math.random()*(30-20))+20, Math.random()*1 );
+    createRipple(new Vector2(ROWS/2, COLS/2), Math.floor(Math.random()*(30-20))+20, 2 );
+    bgRef.current.set(DARK_BACKGROUND_COLOR);
     setInterval(()=>{
-        createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(30-20))+20, Math.random()*1 );
-        createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(30-20))+20, Math.random()*1 );
-    }, 8000);
+        // createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(20-10))+10, Math.random()*(2-0.5)+0.5 );
+        // createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(20-10))+10, Math.random()*(2-0.5)+0.5 );
+        createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(30-20))+20, Math.random()*(2-0.5)+0.5 );
+        createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(30-20))+20, Math.random()*(2-0.5)+0.5 );
+    }, 12000);
   },[])
   
 //   useFrame((state)=>{
@@ -73,8 +85,23 @@ export function HomeScene(props:HomeSceneProps)
     function createRipple(position:Vector2, range:number, strength:number)
     {
         const color = new Color().setHSL(Math.random()*1,1,0.5);
+        // let color; 
+        // if(c===0) 
+        // { 
+        //     color = new Color(0xff0000); 
+        // } 
+        // else if(c===1) 
+        // { 
+        //     color = new Color(0x00ff00); 
+        // }  
+        // else 
+        // { 
+        //     color = new Color(0x0000ff); 
+        // } 
+        // c++; 
+        // if(c>2) c=0; 
 
-        const ripple = new Ripple(position,range, strength, color);
+        const ripple = new Ripple(position,range, strength, color, 18);
 
         for(let x=Math.floor(ripple.position.x - ripple.radius/2); x<=ripple.position.x+ ripple.radius/2 ; x++)
         {
@@ -95,6 +122,29 @@ export function HomeScene(props:HomeSceneProps)
 
         ripples.push(ripple);
         console.log(`new Ripple at ${position.x},${position.y}`);
+    }
+    function changeTheme()
+    {
+        if(transitionWave!=null)
+        {
+            return;
+        }
+        
+        console.log(`Transition Wave created`);
+        const tWave = new Ripple(new Vector2(COLS/2, ROWS/2), 0,0,new Color(), 3);
+        for(let y=0; y<ROWS; y++)
+        {
+            for(let x=0; x<COLS; x++)
+            {
+                tWave.gridValues[y][x] = new RippleCubeData();
+            }
+        }
+        transitionWave = tWave;
+
+    }
+    function dropCubes()
+    {
+
     }
     useFrame((state)=>{
 
@@ -134,7 +184,7 @@ export function HomeScene(props:HomeSceneProps)
                             // newY =  (Math.sin((tVal-dVal)*(1/(1-(dVal/Math.PI)))) * Math.cos(dVal/2));
 
                             // newY =  Math.sin((tVal-dVal)*(1/(1-(dVal/Math.PI)))) * (1-normalizedDistance);
-                            newY =  Math.sin(3*(tVal-dVal)) * (1-ripple.progress) * (1-normalizedDistance);
+                            newY =  Math.sin(1*(tVal-dVal)) * (1-ripple.progress) * (1-normalizedDistance);
                             // if((tVal-dVal)>(Math.PI/2))
                             // {
                             //     newY = 100
@@ -145,7 +195,6 @@ export function HomeScene(props:HomeSceneProps)
                                 
                             // }
                         }
-                        //let newColor = new Color().lerpColors(ripple.color, DEFAULT_COLOR, 1-newY ); 
 
                         ripple.gridValues[y][x]!.heightValue = newY * ripple.strength;
                         ripple.gridValues[y][x]!.rawHeight = newY;
@@ -153,6 +202,51 @@ export function HomeScene(props:HomeSceneProps)
                 }
             });
             ripples = ripples.filter(ripp => {return ripp.shouldBeKilled !== true});
+        }
+        if(transitionWave!==null)
+        {
+            transitionWave.update();
+
+            const mostFarthestPosition = grid[0][0].worldPosition;
+            
+            for(let y=0; y<ROWS; y++)
+            {
+                for(let x=0; x<COLS; x++)
+                {
+                    const distance = (x-transitionWave.position.x)*(x-transitionWave.position.x) + (y-transitionWave.position.y)*(y-transitionWave.position.y);
+                    const maxAllowedRadius = (mostFarthestPosition.x-transitionWave.position.x)*(mostFarthestPosition.x-transitionWave.position.x) + (mostFarthestPosition.y-transitionWave.position.y)*(mostFarthestPosition.y-transitionWave.position.y);
+                    const normalizedDistance = distance/maxAllowedRadius;
+
+                    const tVal = 2*Math.PI*transitionWave.progress;
+                    const dVal = Math.PI*normalizedDistance;
+                    let newY = 0;
+                    if(tVal > dVal)
+                    {
+                        if((tVal-dVal)<(Math.PI/2))
+                        {
+                            newY =  -Math.tan((tVal-dVal)) * (1-transitionWave.progress) * (1-normalizedDistance) ;
+                        }
+                        if((tVal-dVal)>(Math.PI/2) && (tVal-dVal)<(Math.PI*3/2))
+                        {
+                            newY = 100;
+                        }
+                        if((tVal-dVal)>(Math.PI*3/2))
+                        {
+                            newY =  -Math.tan((tVal-dVal)) * (1-transitionWave.progress) * (1-normalizedDistance) ;
+                        }
+                    }
+                    transitionWave.gridValues[y][x]!.heightValue = newY;
+                }
+            }
+            DEFAULT_COLOR = new Color().lerpColors(LIGHT_COLOR, DARK_COLOR, darkTheme===true? 1-transitionWave.progress : transitionWave.progress)
+            bgRef.current.lerpColors(LIGHT_BACKGROUND_COLOR, DARK_BACKGROUND_COLOR, darkTheme===true? 1-transitionWave.progress : transitionWave.progress);
+            if(transitionWave.shouldBeKilled===true)
+            {
+                transitionWave = null;
+                themeChanged = false;
+                darkTheme = !darkTheme;
+                console.log(`Transition Wave destroyed`,darkTheme);
+            }
         }
 
         groupRef.current.children.forEach((child, idx)=>{
@@ -165,7 +259,7 @@ export function HomeScene(props:HomeSceneProps)
             const y = Math.floor(idx/ROWS);
             const x = idx%ROWS;
             
-            let finalColor = null//new Color(0x000000);
+            let finalColor = null; //new Color(0x000000);
             let finalHSL:HSL = {h:0,s:0,l:0};
             let combinedHeight = 0;
             let amountOfRipplesInCell = 0;
@@ -197,7 +291,7 @@ export function HomeScene(props:HomeSceneProps)
             if(finalColor==null)
             {
                 //@ts-ignore
-                child.material.color = DEFAULT_COLOR;
+                child.material.color = DEFAULT_COLOR.clone();
             }
             else if((new Set([finalColor.r,finalColor.g,finalColor.b])).size !== 1)
             {
@@ -205,14 +299,19 @@ export function HomeScene(props:HomeSceneProps)
                 //@ts-ignore
                 child.material.color = new Color().lerpColors(DEFAULT_COLOR, new Color().setHSL(finalHSL.h,1,finalHSL.l), 1-Math.abs(0.5-finalHSL.l)/0.5 );
             }
-            else if (combinedHeight>0)
+            else
             {
-                //child.material.color = new Color().lerpColors(DEFAULT_COLOR, new Color(0xffffff),finalHSL.l);
+                //@ts-ignore
+                child.material.color = DEFAULT_COLOR.clone();
+                
             }
 
             //nakładanie się wysokości fal
-            const heightValue = ripples.reduce((partialSum, item)=> partialSum+(item.gridValues[y][x]?.heightValue||0), 0);
-
+            let heightValue = ripples.reduce((partialSum, item)=> partialSum+(item.gridValues[y][x]?.heightValue||0), 0);
+            if(transitionWave!==null)
+            {
+                heightValue += transitionWave.gridValues[y][x]!.heightValue;
+            }
             child.position.z =  heightValue //;+ Math.sin((state.clock.elapsedTime + x%2*Math.PI + y%2*Math.PI + idx ) / 2) / 40;
             // child.position.z =  heightValue + Math.sin((state.clock.elapsedTime + idx ) / 0.5) / 10; 
 
@@ -223,7 +322,8 @@ export function HomeScene(props:HomeSceneProps)
     <>
         {/* <color attach="background" args={["#211f28"]} /> */}
         {/* <color attach="background" args={["#e2e2e2"]} /> */}
-        <color attach="background" args={["#e7e7e7"]} />
+        <color ref={bgRef} attach="background" args={["#111111"]} />
+        {/* <color attach="background" args={["#e7e7e7"]} /> */}
 
         <OrbitControls 
         enablePan={false} 
@@ -242,7 +342,9 @@ export function HomeScene(props:HomeSceneProps)
         <PerspectiveCamera 
             makeDefault 
             ref={cameraRef}
+            // position={[0,20,0]}
             position={[9,3.5,9]}
+            // position={[12,3.5,12]}
             fov={50}
         />    
         {/* <gridHelper/>
@@ -262,8 +364,8 @@ export function HomeScene(props:HomeSceneProps)
                     return (
                         rowItem.map((colItem, x)=>{
                             const cubeData = grid[y][x];
-                            // return( <CubeMesh key={y*10+x} position={cubeData.worldPosition} onClick={()=>{createRipple(cubeData.arrayPosition)}}/>)
-                            return( <CubeMesh key={y*10+x} position={cubeData.worldPosition}/>)
+                            // return( <CubeMesh key={y*10+x} position={cubeData.worldPosition} onClick={()=>{createRipple(cubeData.arrayPosition, 40,4)}}/>)
+                            return( <CubeMesh key={y*10+x} position={cubeData.worldPosition} onClick={()=>{changeTheme()}}/>)
                         })
                         
                         )
