@@ -7,7 +7,7 @@ import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
-import { createTheme } from '@mui/material';
+import { createTheme, responsiveFontSizes } from '@mui/material';
 import { ThemeProvider } from '@emotion/react';
 
 let rootNode:ReactDOM.Root|undefined;
@@ -18,16 +18,20 @@ export function start()
     console.log("Creating root container...");
     rootNode = ReactDOM.createRoot(document.getElementById('app') as HTMLElement);
 
-    const primaryColor = '#00ff89';
+    // const primaryColor = '#00ff89';
+    const primaryColor = '#ffffff';
+    // const primaryColor = '#ed143d';
+    // const primaryColor = `hsl(${Math.random()*360},100%,50%)`;
     const secondaryColor = '#00894f';
-    const theme = createTheme({
+    let theme = createTheme({
       palette: {
-        mode: 'light',
+        mode: 'dark',
         primary: {main: primaryColor},
         secondary: {main: secondaryColor},
-        contrastThreshold:2
+        // contrastThreshold:2
       }
     });
+    theme = responsiveFontSizes(theme);
 
     rootNode.render(
         <React.StrictMode>

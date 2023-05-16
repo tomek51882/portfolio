@@ -19,10 +19,11 @@ export function CubeMesh(props:CubeMeshProps)
         props.onClick?.();
     }
     return (
-        <mesh ref={meshRef} position={props.position} onClick={(e)=>{e.stopPropagation();handleClick(); }}>
+        <mesh frustumCulled={false} ref={meshRef} position={props.position} onClick={(e)=>{e.stopPropagation();handleClick(); }}>
             <boxGeometry args={[1, 1, 1]}/>
             {/* <meshStandardMaterial color={props.startColor}/> */}
-            <meshStandardMaterial/>
+            <meshLambertMaterial />
+            {/* <meshBasicMaterial/> */}
         </mesh>
     )
 }
