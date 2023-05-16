@@ -2,10 +2,11 @@ import { OrbitControls, PerspectiveCamera, useScroll, Stats, OrthographicCamera 
 import { CameraProps, useFrame } from "@react-three/fiber";
 import React, { useEffect, useRef, useState } from "react";
 import { Vector3, Color, Group, Vector2, MathUtils, HSL } from "three";
-import { Cube } from "../Models/Cube";
-import { CubeMesh } from "../Components/3D/CubeMesh";
-import { Ripple, RippleCubeData } from "../Models/Ripple";
+
 import {  Bloom, DepthOfField, EffectComposer } from "@react-three/postprocessing";
+import { Cube } from "../../Models/Cube";
+import { Ripple, RippleCubeData } from "../../Models/Ripple";
+import { CubeMesh } from "./CubeMesh";
 
 //https://stackoverflow.com/questions/31121628/finding-all-points-in-certain-radius-of-another-point
 //https://stackoverflow.com/questions/74417694/find-all-points-in-a-radius-of-one-point-python
@@ -13,7 +14,7 @@ import {  Bloom, DepthOfField, EffectComposer } from "@react-three/postprocessin
 //https://sbcode.net/react-three-fiber/lerp/
 
 
-interface HomeSceneProps 
+interface BackgroundSceneProps 
 {
 
 }
@@ -25,26 +26,26 @@ let transitionWave:Ripple|null = null;
 let themeChanged = false;
 let c:number = 0;
 const LIGHT_COLOR = new Color(0xffffff);
-const DARK_COLOR = new Color(0x000000);
+const DARK_COLOR = new Color(0x030303);
 let DEFAULT_COLOR = DARK_COLOR;
 
 const DARK_BACKGROUND_COLOR = new Color(0x010101);
 const LIGHT_BACKGROUND_COLOR = new Color(0xcccccc);
 // const DEFAULT_COLOR = new Color(0xffffff);
 let darkTheme = true;
+let animationDisabled = false;
 
-export function HomeScene(props:HomeSceneProps)
+export function BackgroundScene(props:BackgroundSceneProps)
 {
     
   const cameraRef = useRef<CameraProps>();
-  const scroll = useScroll();
   const groupRef = useRef<Group>(null!);
   const bgRef = useRef<Color>(null!);
 
   const [grid, setGrid] = useState<Cube[][]>([]);
 
   useEffect(()=>{
-    let grid:any[][] = [];
+    let grid:Cube[][] = [];
     for(let y=0; y<ROWS; y++)
     {
         grid[y] = [];
@@ -53,12 +54,16 @@ export function HomeScene(props:HomeSceneProps)
             grid[y][x] = new Cube(new Vector2(x,y), new Vector3(x-((COLS-1)/2),y-((ROWS-1)/2),0));
         }
     }
-    console.log(cameraRef);
+
     Ripple.setMapDimentions(ROWS, COLS);
     setGrid(grid);
     createRipple(new Vector2(ROWS/2, COLS/2), Math.floor(Math.random()*(30-20))+20, 2 );
     bgRef.current.set(DARK_BACKGROUND_COLOR);
     setInterval(()=>{
+        if(animationDisabled)
+        {
+            return;
+        }
         // createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(20-10))+10, Math.random()*(2-0.5)+0.5 );
         // createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(20-10))+10, Math.random()*(2-0.5)+0.5 );
         createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(30-20))+20, Math.random()*(2-0.5)+0.5 );
@@ -147,9 +152,9 @@ export function HomeScene(props:HomeSceneProps)
 
     }
     useFrame((state)=>{
-
+        
         //tworzenie mapy fali
-        if(ripples.length!==0)
+        if(ripples.length!==0 && animationDisabled===false)
         {
             ripples.forEach((ripple,idx) => {
                 ripple.update();
@@ -157,7 +162,6 @@ export function HomeScene(props:HomeSceneProps)
                     console.log("ripple removed")
                     return;
                 }; 
-
                 for(let x=Math.floor(ripple.position.x - ripple.radius/2); x<=ripple.position.x+ ripple.radius/2 ; x++)
                 {
                     if(x<0 || x>COLS-1) continue;
@@ -375,7 +379,7 @@ export function HomeScene(props:HomeSceneProps)
 
         {/* <CubeMesh position={new Vector2(2,0)} id={new Vector2(12,0)} color={new Color(0xff0000)}/> */}
 
-        {/* <Stats/> */}
+        {/* <Stats /> */}
 
         {/* <EffectComposer resolutionScale={0}>
             <DepthOfField blendFunction={4}/>

@@ -22,7 +22,7 @@ export function CubeMesh(props:CubeMeshProps)
         <mesh frustumCulled={false} ref={meshRef} position={props.position} onClick={(e)=>{e.stopPropagation();handleClick(); }}>
             <boxGeometry args={[1, 1, 1]}/>
             {/* <meshStandardMaterial color={props.startColor}/> */}
-            <meshStandardMaterial/>
+            <meshLambertMaterial />
             {/* <meshBasicMaterial/> */}
         </mesh>
     )
