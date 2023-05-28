@@ -9,6 +9,7 @@ export class Ripple
     lifetime:number;
     shouldBeKilled:boolean = false;
     radius:number;
+    cycles:number;
     strength:number;
     progress:number = 0;
     gridValues:(RippleCubeData|null)[][] ;
@@ -17,7 +18,7 @@ export class Ripple
     static rows:number;
     static cols:number;
     
-    constructor(position:Vector2, radius:number,strength:number, color:Color, lifetime:number)
+    constructor(position:Vector2, radius:number,strength:number, color:Color, lifetime:number, cycles:number)
     {
         this.position = position;
         this.lastUpdate = Date.now();
@@ -26,6 +27,7 @@ export class Ripple
         this.strength = strength;
         this.color = color;
         this.lifetime = lifetime;
+        this.cycles = cycles;
         // this.hsl = {h:0,s:0,l:0};
 
         // color.getHSL(this.hsl);

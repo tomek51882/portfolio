@@ -7,6 +7,7 @@ import {  Bloom, DepthOfField, EffectComposer } from "@react-three/postprocessin
 import { Cube } from "../../Models/Cube";
 import { Ripple, RippleCubeData } from "../../Models/Ripple";
 import { CubeMesh } from "./CubeMesh";
+import { Leva, button, useControls } from "Leva";
 
 //https://stackoverflow.com/questions/31121628/finding-all-points-in-certain-radius-of-another-point
 //https://stackoverflow.com/questions/74417694/find-all-points-in-a-radius-of-one-point-python
@@ -16,7 +17,10 @@ import { CubeMesh } from "./CubeMesh";
 
 interface BackgroundSceneProps 
 {
-
+  isInViewport:boolean;
+  
+  playgroundMode:boolean;
+  onExitPlayground:()=>void;
 }
 
 const ROWS = 20;
@@ -43,6 +47,43 @@ export function BackgroundScene(props:BackgroundSceneProps)
   const bgRef = useRef<Color>(null!);
 
   const [grid, setGrid] = useState<Cube[][]>([]);
+  const [time, setTime] = useState<number>(Date.now());
+
+  const {randomRipples,useRandomColor,rippleColor,rippleRadius,rippleLifetime,rippleStrength,rippleCycles} = useControls({
+    
+    'Exit Playground':button(()=>{props.onExitPlayground()}),
+    'Change Theme':button(()=>{changeTheme()}),
+    randomRipples:true,
+    useRandomColor:true, 
+    rippleColor: {
+      value:"#ff0000", 
+      render: (get) => get('useRandomColor')===false
+    },
+    rippleRadius: {
+      value: 20,
+      min: 1,
+      max: 40,
+      step: 1,
+    },
+    rippleLifetime: {
+      value: 18,
+      min: 1,
+      max: 20,
+      step: 1,
+    },
+    rippleStrength: {
+      value: 1,
+      min: 0,
+      max: 10,
+      step: 0.25,
+    },
+    rippleCycles: {
+      value: 1,
+      min: 0,
+      max: 10,
+      step: 0.5,
+    }
+  })
 
   useEffect(()=>{
     let grid:Cube[][] = [];
@@ -57,20 +98,31 @@ export function BackgroundScene(props:BackgroundSceneProps)
 
     Ripple.setMapDimentions(ROWS, COLS);
     setGrid(grid);
-    createRipple(new Vector2(ROWS/2, COLS/2), Math.floor(Math.random()*(30-20))+20, 2 );
+    // createRipple(new Vector2(ROWS/2, COLS/2), Math.floor(Math.random()*(30-20))+20, 2 );
     bgRef.current.set(DARK_BACKGROUND_COLOR);
-    setInterval(()=>{
-        if(animationDisabled)
-        {
-            return;
-        }
-        // createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(20-10))+10, Math.random()*(2-0.5)+0.5 );
-        // createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(20-10))+10, Math.random()*(2-0.5)+0.5 );
+
+    const interval = setInterval(()=>{
+      setTime(Date.now());
+    },8000);
+    return () => {
+      clearInterval(interval);
+    };
+    },[])
+    useEffect(()=>{
+      if(animationDisabled||props.isInViewport===false||document.hidden===true||(props.playgroundMode && randomRipples===false ))
+      {
+          return;
+      }
+      createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(30-20))+20, Math.random()*(2-0.5)+0.5 );
+      if(Math.random()<0.50)
+      {
         createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(30-20))+20, Math.random()*(2-0.5)+0.5 );
-        createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(30-20))+20, Math.random()*(2-0.5)+0.5 );
-    }, 12000);
-  },[])
+        // createRipple(new Vector2(Math.floor(Math.random()*ROWS), Math.floor(Math.random()*COLS)), Math.floor(Math.random()*(20-10))+10, Math.random()*(0.5)+0.5 );
+      }
+  },[time])
+
   
+
 //   useFrame((state)=>{
 //     // console.log(groupRef);
     // groupRef.current.children.forEach((child, idx)=>{
@@ -106,7 +158,13 @@ export function BackgroundScene(props:BackgroundSceneProps)
         // c++; 
         // if(c>2) c=0; 
 
-        const ripple = new Ripple(position,range, strength, color, 18);
+        const ripple = new Ripple(position, 
+          props.playgroundMode ? rippleRadius : range, 
+          props.playgroundMode ? rippleStrength : strength, 
+          props.playgroundMode && useRandomColor===false ? new Color(rippleColor) : color, 
+          props.playgroundMode ? rippleLifetime : 18,
+          props.playgroundMode ? rippleCycles : 1
+        );
 
         for(let x=Math.floor(ripple.position.x - ripple.radius/2); x<=ripple.position.x+ ripple.radius/2 ; x++)
         {
@@ -126,7 +184,7 @@ export function BackgroundScene(props:BackgroundSceneProps)
 
 
         ripples.push(ripple);
-        console.log(`new Ripple at ${position.x},${position.y}`);
+        // console.log(`new Ripple at ${position.x},${position.y}`);
     }
     function changeTheme()
     {
@@ -135,8 +193,8 @@ export function BackgroundScene(props:BackgroundSceneProps)
             return;
         }
         
-        console.log(`Transition Wave created`);
-        const tWave = new Ripple(new Vector2(COLS/2, ROWS/2), 0,0,new Color(), 3);
+        // console.log(`Transition Wave created`);
+        const tWave = new Ripple(new Vector2(COLS/2, ROWS/2), 0,0,new Color(), 3,1);
         for(let y=0; y<ROWS; y++)
         {
             for(let x=0; x<COLS; x++)
@@ -147,19 +205,18 @@ export function BackgroundScene(props:BackgroundSceneProps)
         transitionWave = tWave;
 
     }
-    function dropCubes()
-    {
-
-    }
     useFrame((state)=>{
-        
+        if(props.isInViewport===false)
+        {
+          return;
+        }
         //tworzenie mapy fali
         if(ripples.length!==0 && animationDisabled===false)
         {
             ripples.forEach((ripple,idx) => {
                 ripple.update();
                 if(ripple.shouldBeKilled===true){
-                    console.log("ripple removed")
+                    // console.log("ripple removed")
                     return;
                 }; 
                 for(let x=Math.floor(ripple.position.x - ripple.radius/2); x<=ripple.position.x+ ripple.radius/2 ; x++)
@@ -185,19 +242,8 @@ export function BackgroundScene(props:BackgroundSceneProps)
                         let newY = 0;
                         if(tVal > dVal)
                         {
-                            // newY =  (Math.sin((tVal-dVal)*(1/(1-(dVal/Math.PI)))) * Math.cos(dVal/2));
 
-                            // newY =  Math.sin((tVal-dVal)*(1/(1-(dVal/Math.PI)))) * (1-normalizedDistance);
-                            newY =  Math.sin(1*(tVal-dVal)) * (1-ripple.progress) * (1-normalizedDistance);
-                            // if((tVal-dVal)>(Math.PI/2))
-                            // {
-                            //     newY = 100
-                            // }
-                            // else
-                            // {
-                            //     newY =  Math.tan((tVal-dVal)) * (1-ripple.progress) * (1-normalizedDistance);
-                                
-                            // }
+                            newY =  Math.sin(ripple.cycles*(tVal-dVal)) * (1-ripple.progress) * (1-normalizedDistance);
                         }
 
                         ripple.gridValues[y][x]!.heightValue = newY * ripple.strength;
@@ -249,7 +295,7 @@ export function BackgroundScene(props:BackgroundSceneProps)
                 transitionWave = null;
                 themeChanged = false;
                 darkTheme = !darkTheme;
-                console.log(`Transition Wave destroyed`,darkTheme);
+                // console.log(`Transition Wave destroyed`,darkTheme);
             }
         }
 
@@ -281,10 +327,10 @@ export function BackgroundScene(props:BackgroundSceneProps)
                 }
                 amountOfRipplesInCell++;
 
-                const rawHeightValue = ripple.gridValues[y][x]!.rawHeight;
-                let r:number = finalColor.r + ripple.color.r*(rawHeightValue*1.2);
-                let g:number = finalColor.g + ripple.color.g*(rawHeightValue*1.2);
-                let b:number = finalColor.b + ripple.color.b*(rawHeightValue*1.2);
+                const rawHeightValue = ripple.gridValues[y][x]!.rawHeight*1.2;
+                let r:number = finalColor.r + ripple.color.r*(rawHeightValue);
+                let g:number = finalColor.g + ripple.color.g*(rawHeightValue);
+                let b:number = finalColor.b + ripple.color.b*(rawHeightValue);
 
                 finalColor = new Color(MathUtils.clamp(r,0,1),MathUtils.clamp(g,0,1),MathUtils.clamp(b,0,1));
                 finalHSL = finalColor.getHSL(finalHSL);
@@ -295,7 +341,7 @@ export function BackgroundScene(props:BackgroundSceneProps)
             if(finalColor==null)
             {
                 //@ts-ignore
-                child.material.color = DEFAULT_COLOR.clone();
+                child.material.color = DEFAULT_COLOR;
             }
             else if((new Set([finalColor.r,finalColor.g,finalColor.b])).size !== 1)
             {
@@ -306,7 +352,7 @@ export function BackgroundScene(props:BackgroundSceneProps)
             else
             {
                 //@ts-ignore
-                child.material.color = DEFAULT_COLOR.clone();
+                child.material.color = DEFAULT_COLOR;
                 
             }
 
@@ -332,10 +378,10 @@ export function BackgroundScene(props:BackgroundSceneProps)
         <OrbitControls 
         enablePan={false} 
         enableDamping={false} 
-        enableZoom={false} 
-        enableRotate={false}
+        enableZoom={props.playgroundMode} 
+        enableRotate={props.playgroundMode}
         target={new Vector3(0,0,0)} 
-        autoRotate={true}
+        autoRotate={props.playgroundMode===false}
         autoRotateSpeed={0.2}
         />
         {/* <PerspectiveCamera 
@@ -354,7 +400,6 @@ export function BackgroundScene(props:BackgroundSceneProps)
         {/* <gridHelper/>
         <axesHelper/> */}
 
-
         <ambientLight color={new Color(0xb0b0b0)}/>
         {/* <SpotLight angle={0.34} intensity={14} attenuation={8} distance={8} color={"#4040dd"} position={[-1,4,2]} penumbra={0} />
         <SpotLight angle={0.25} intensity={8} attenuation={8} distance={8} color={"#bb3333"} position={[2,4,-2]} penumbra={1} /> */}
@@ -369,7 +414,7 @@ export function BackgroundScene(props:BackgroundSceneProps)
                         rowItem.map((colItem, x)=>{
                             const cubeData = grid[y][x];
                             // return( <CubeMesh key={y*10+x} position={cubeData.worldPosition} onClick={()=>{createRipple(cubeData.arrayPosition, 40,4)}}/>)
-                            return( <CubeMesh key={y*10+x} position={cubeData.worldPosition} onClick={()=>{changeTheme()}}/>)
+                            return( <CubeMesh key={y*10+x} position={cubeData.worldPosition} onClick={()=>{createRipple(cubeData.arrayPosition, 40,4)}}/>)
                         })
                         
                         )
