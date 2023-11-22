@@ -15,6 +15,36 @@ export function MyProjects()
 
   const projects:Project[] = [
     {
+      id:3,
+      name:"Procedural Terrain Generator",
+      thumbnailUrl:"./thumbs/terrain.jpg",
+      shortDescription:"An experiment that was used to learn a little bit about procedurally generated terrain.",
+      fullDescription:["In this project for the first time I played a little bit the procedural terrain generation. The main idea was to use Perlin Noise to generate a height map later used by mesh generator to create a chunk of the terrain. Multiple chunks were building interestingly looking terrain.","Later multiple noise maps were used to build even more detailed terrain and few maps were used as a temperature and humidity that could be used to determine what biome should be placed there.","Data for chunks was generated in separate threads and the chunks themself were generated with variable level of details"],
+      summaryChips:["Unity", "C#"],
+      gitHubUrl:"https://github.com/tomek51882/NXT_TG",
+      imageUrls:["./images/terrain1.png","./images/terrain2.png","./images/terrain3.png"],
+    },
+    {
+      id:4,
+      name:"Some RPG mechanics",
+      thumbnailUrl:"./thumbs/rpg.jpg",
+      shortDescription:"Tiny project where I tried to implement some RPG mechanics.",
+      fullDescription:["This project was used for implementing some RPG mechanisms and learn a little bit about Unity's Scriptable Objects. This project implements an inventory management, some basic stats, calculating health based on those stats, looting stuff from chests and more."],
+      summaryChips:["Unity", "C#"],
+      gitHubUrl:"https://github.com/tomek51882/mRPG_Pathfinder",
+      imageUrls:["./images/rpg.png"],
+    },
+    {
+      id:5,
+      name:"Inventory System",
+      thumbnailUrl:"./thumbs/inv.jpg",
+      shortDescription:"An Inventory system that uses heavily depends on 2D Codes (Barcodes, QR Codes, DataMatrix) assigned to items.",
+      fullDescription:["An attempt to create an Inventory System where user could attach a QR Code (or something else) to an item and later use this code to perform some tasks. The code could be scanned directly in the app using device's camera."],
+      summaryChips:[".NET 7", "C#", "Blazor", "WebAPI", "REST API", "Entity Framework", "MySQL", "JWT"],
+      imageUrls:["./images/inv.png"],
+      alertMessage:{message:"Under development", alertType:"info"}
+    },
+    {
       id:0,
       name:"Arduino Light Controls",
       thumbnailUrl:"./thumbs/ard.jpg",
@@ -22,7 +52,7 @@ export function MyProjects()
       fullDescription:["Currently, limited information can be provided about this project. The objective is to achieve wireless control of the lighting system in conjunction with an Arduino board.","The application is hosted on an Arduino board, and due to restricted transfer speed, it can be installed on the device after initiation. Once installed, the application utilizes SSDP to discover and establish a connection with nearby Arduino board. Subsequently, all configuration changes are sent to the Arduino board and, if required, to the connected devices."],
       summaryChips:["TypeScript", "React", "C", "Arduino"],
       imageUrls:["./images/ard1.jpg","./images/ard2.png","./images/ard3.jpg","./images/ard4.jpg"],
-      alertMessage:"Under development"
+      alertMessage:{message:"Development has been suspended", alertType:"warning"}
     },
     {
       id:1,
@@ -103,7 +133,7 @@ export function MyProjects()
       </Carousel>
       <DialogContent>
         {selectedProject?.alertMessage && (
-          <Alert variant="outlined" severity="info" sx={{mb:2}}>Under development</Alert>
+          <Alert variant="outlined" severity={selectedProject.alertMessage.alertType} sx={{mb:2}}>{selectedProject.alertMessage.message}</Alert>
         )}
         {selectedProject?.fullDescription?.map((desc, idx)=>{
           return idx===0 ? <Typography key={idx} variant="body1" sx={{textAlign:"justify"}}>{desc}</Typography> : <Typography key={idx} variant="body1" sx={{textAlign:"justify", mt:2}}>{desc}</Typography>

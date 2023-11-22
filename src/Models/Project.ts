@@ -4,7 +4,7 @@ export type Project =
   name:String;
   shortDescription?:string;
   fullDescription?:string[];
-  alertMessage?:string;
+  alertMessage?:{message:string, alertType:"info"|"warning"};
 
   thumbnailUrl?:string;
   imageUrls?:string[];
